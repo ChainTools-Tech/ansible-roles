@@ -55,7 +55,7 @@ No dependencies.
 Example Playbook
 ----------------
 
-**ardor.yml**
+**Playbook file: ardor.yml**
 ```yaml
 ---
 - hosts: ardor
@@ -65,13 +65,14 @@ Example Playbook
     - ardor-node
 ```
 
-**hosts**
+**Inventory file: hosts**
 ```
 [ardor]
 node1.domain.com
 node2.domain.com
 ```
 
+**Playbook execution**
 ```bash
 ansible-playbook ardor.yml -i hosts
 ```
