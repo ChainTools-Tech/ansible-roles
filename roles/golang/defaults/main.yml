@@ -1,0 +1,8 @@
+golang_arch: "amd64"
+golang_download_path: "/tmp"
+golang_install_path: "/usr/local"
+golang_owner: "root"
+golang_group: "root"
+golang_profiles:
+  - {path: "/etc/skel/.profile"}
+  - {path: "/root/.profile"}

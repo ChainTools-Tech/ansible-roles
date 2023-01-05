@@ -1,0 +1,59 @@
+---
+- name: Fetch the latest version of Golang from URL
+  ansible.builtin.set_fact:
+    golang_latest_version: "{{ lookup('url', 'https://go.dev/VERSION?m=text') }}"
+
+
+- name: Set Golang package download URL
+  ansible.builtin.set_fact:
+    golang_url: "https://golang.org/dl/{{ golang_latest_version }}.linux-{{ golang_arch }}.tar.gz"
+
+
+- name: Set Golang package name
+  ansible.builtin.set_fact:
+    golang_package_name: "{{ golang_url | basename }}"
+
+
+- name: Download Golang {{ golang_latest_version }}
+  ansible.builtin.get_url:
+    url: "{{ golang_url }}"
+    dest: "{{ golang_download_path }}"
+
+
+- name: Remove previous Golang installation
+  ansible.builtin.file:
+    path: "/usr/local/go"
+    state: absent
+
+
+- name: Unpack Golang archive
+  ansible.builtin.unarchive:
+    src: "{{ golang_download_path }}/{{ golang_package_name }}"
+    dest: "{{ golang_install_path }}"
+    owner: "{{ golang_owner }}"
+    group: "{{ golang_group }}"
+    remote_src: yes
+
+
+- name: Remove Golang archive.
+  ansible.builtin.file:
+    path: "{{ golang_download_path }}/{{ golang_package_name }}"
+    state: absent
+
+
+- name: Add Golang variables to skeleton files
+  ansible.builtin.blockinfile:
+    dest: "{{ item.path }}"
+    marker: "###### {mark} Ansible Config #####"
+    block: |
+      # add environmental variables for Go
+      if [ -f "/usr/local/go/bin/go" ] ; then
+          export GOROOT=/usr/local/go
+          export GOPATH=${HOME}/go
+          export GOBIN=${GOPATH}/bin
+          export PATH=${PATH}:${GOROOT}/bin:${GOBIN}
+      fi
+    backup: yes
+  with_items:
+     "{{ golang_profiles }}"
+
