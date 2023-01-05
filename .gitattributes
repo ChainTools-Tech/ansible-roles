@@ -1,2 +1,0 @@
-*.* linguist-language=YAML
-*.j2 linguist-detectable=false
