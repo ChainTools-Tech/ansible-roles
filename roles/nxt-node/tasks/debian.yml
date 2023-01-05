@@ -1,0 +1,19 @@
+---
+- name: Install ufw
+  apt: package=ufw state=present
+
+
+- name: Configure ufw default policies
+  ufw: direction={{ item.direction }} policy={{ item.policy }}
+  with_items:
+    "{{ firewall_policies }}"
+
+
+- name: Configure ufw rules
+  ufw: rule={{ item.rule }} port={{ item.port }} proto={{ item.proto }} comment={{ item.comment }}
+  with_items:
+    "{{ firewall_fules }}"
+
+
+- name: Enable ufw logging
+  ufw: logging=on

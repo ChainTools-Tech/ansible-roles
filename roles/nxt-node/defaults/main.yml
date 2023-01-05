@@ -1,0 +1,26 @@
+ssh_port: "22"
+packages_list:
+  - pwgen
+  - openjdk-11-jre-headless
+  - default-jdk
+client_bin_url: "https://www.jelurida.com/nxt-client.zip"
+client_bin_archive: "nxt-client.zip"
+chain_db_url: "https://www.jelurida.com/NXT-nxt_db.zip"
+chain_db_archive: "NXT-nxt_db.zip"
+node_download_folder: "/tmp"
+node_user: "nxt"
+node_group: "nxt"
+node_home: "/home/nxt"
+node_db_home: "{{ node_home }}/nxt"
+node_config_file: "nxt.properties"
+node_config_folder: "{{ node_db_home }}/conf"
+node_service_name: "nxt"
+node_service_file: "/etc/systemd/system/{{ node_service_name }}.service"
+nxt_my_platform: "UNDEFINED"
+firewall_policies:
+    - { direction: 'incoming', policy: 'deny' }
+    - { direction: 'outgoing', policy: 'allow' }
+firewall_rules:
+    - { rule: 'limit', port: '{{ ssh_port | default("22") }}', proto: 'tcp', comment: "Secure Shell Access" }
+    - { rule: 'allow', port: '7874', proto: 'tcp', comment: "NXT Node Peer Port" }
+    - { rule: 'allow', port: '7876', proto: 'tcp', comment: "NXT Node API Port" }

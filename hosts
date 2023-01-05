@@ -1,3 +1,7 @@
 [ardor]
 node1.domain.com
 node2.domain.com
+
+[nxt]
+node3.domain.com
+node4.domain.com

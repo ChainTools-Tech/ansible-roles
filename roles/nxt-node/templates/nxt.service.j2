@@ -1,0 +1,15 @@
+[Unit]
+Description=Ardor Node
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+User={{ node_user }}
+Group={{ node_group }}
+Type=simple
+ExecStart={{ node_home }}/nxt/run.sh
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,89 @@
+---
+- name: Install required packages
+  become: true
+  package: name='{{ item }}' state=present
+  with_items:
+    "{{ packages_list }}"
+
+
+- name: Generate service user password
+  shell: pwgen -sy 32 1
+  register: node_user_password
+
+
+- name: Hashing passwords
+  set_fact:
+    node_user_password_hash: "{{ node_user_password.stdout | password_hash('sha512') }}"
+    
+
+- name: Create node user account
+  ansible.builtin.user:
+    name: "{{ node_user }}"
+    password: "{{ node_user_password_hash }}"
+    state: present
+    create_home: yes
+    home: "{{ node_home }}"
+    shell: /bin/bash
+    update_password: on_create
+  register: user_created
+
+
+- name: Download node binaries and chain database
+  ansible.builtin.get_url:
+    url: "{{ item.url }}"
+    dest: "{{ item.dest }}"
+  with_items:
+    - { url: "{{ client_bin_url }}", dest: "{{ node_download_folder }}/{{ client_bin_archive }}" }
+    - { url: "{{ chain_db_url }}", dest: "{{ node_download_folder }}" }
+
+
+- name: Unpack downloaded archives
+  ansible.builtin.unarchive:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    remote_src: yes
+  with_items:
+    - { src: "{{ node_download_folder }}/{{ client_bin_archive }}", dest: "{{ node_home }}", owner: "{{ node_user }}", group: "{{ node_group }}" }
+    - { src: "{{ node_download_folder }}/{{ chain_db_archive }}", dest: "{{ node_db_home }}", owner: "{{ node_user }}", group: "{{ node_group }}" }
+
+
+- name: Create node configuration
+  ansible.builtin.template: 
+    src: "{{ node_config_file }}.j2"
+    dest: "{{ node_config_folder }}/{{ node_config_file }}"
+    owner: "{{ node_user }}"
+    group: "{{ node_group }}"
+
+
+- name: Remove downloaded archives
+  ansible.builtin.file:
+    path: "{{ item.archive_file }}"
+    state: absent
+  with_items:
+    - { archive_file: "{{ node_download_folder }}/{{ client_bin_archive }}" }
+    - { archive_file: "{{ node_download_folder }}/{{ chain_db_archive }}" }
+
+
+- name: Create node systemd service
+  ansible.builtin.template: 
+    src: "{{ node_service_name }}.service.j2"
+    dest: "{{ node_service_file }}"
+    owner: root
+    group: root
+    
+
+- name: Configure & enable firewall (ufw for Debian family)
+  import_tasks: debian.yml
+  when: ansible_os_family|lower == 'debian'
+
+
+- name: Restart services
+  ansible.builtin.service:
+    name: "{{ item.name }}"
+    enabled: yes
+    state: restarted
+  with_items:
+    - { name: "ufw" }
+    - { name: "{{ node_service_name }}" }
