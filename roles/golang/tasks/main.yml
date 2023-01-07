@@ -1,4 +1,7 @@
 ---
+vars:
+  Files: []
+
 - name: Fetch the latest version of Golang from URL
   ansible.builtin.set_fact:
     golang_latest_version: "{{ lookup('url', 'https://go.dev/VERSION?m=text') }}"
@@ -35,13 +38,32 @@
     remote_src: yes
 
 
-- name: Remove Golang archive.
+- name: Remove Golang archive
   ansible.builtin.file:
     path: "{{ golang_download_path }}/{{ golang_package_name }}"
     state: absent
 
 
-- name: Add Golang variables to skeleton files
+- name: Search for profile files
+  ansible.builtin.find:
+    paths: "{{ profile_locations }}"
+    patterns: "{{ profile_files }}"
+    hidden: true
+  register: found_profile_files
+
+
+- name: Create list of located files
+  set_fact:
+    Files: "{{ Files + [item.path]}}"
+  with_items: "{{ found_profile_files.files }}"
+
+
+- name: Display list of located files
+  debug:
+    msg: "{{ Files }}"
+
+
+- name: Add Golang variables to profile files
   ansible.builtin.blockinfile:
     dest: "{{ item.path }}"
     marker: "###### {mark} Ansible Config #####"
@@ -54,6 +76,4 @@
           export PATH=${PATH}:${GOROOT}/bin:${GOBIN}
       fi
     backup: yes
-  with_items:
-     "{{ golang_profiles }}"
-
+  with_items: "{{ found_profile_files.files }}"
