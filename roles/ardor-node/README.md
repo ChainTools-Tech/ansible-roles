@@ -51,7 +51,7 @@ variable for **host_vars**
 ```yaml
 public_ip: "XXX.XXX.XXX.XXX"                                             # public IP of the server where node is installed
 ```
-should be used when server has different IP than the one assigned to network interface. That variable shoul dbe placed specifically in ***host_vars*** for specific host prior to deployment, so configuration file can be adjusted accordingly. In case not specified IP address will be pulles from Ansible facts.
+should be used when server has different IP than the one assigned to network interface. That variable shoul dbe placed specifically in ***host_vars*** for specific host prior to deployment, so configuration file can be adjusted accordingly. In case not specified IP address will be pulled from Ansible facts.
 
 
 Dependencies
