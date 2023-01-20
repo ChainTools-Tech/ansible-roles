@@ -58,7 +58,7 @@ nxt.peerServerHost=0.0.0.0
 # It can optionally include a port number, which will also be announced to
 # peers, and may be different from nxt.peerServerPort (useful if you do port
 # forwarding behind a router).
-nxt.myAddress={{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}
+nxt.myAddress={{ public_ip | default(hostvars[inventory_hostname]['ansible_default_ipv4']['address']) }}
 
 # My platform, to be announced to peers.
 nxt.myPlatform={{ nxt_my_platform }}
