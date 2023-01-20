@@ -47,6 +47,13 @@ firewall_rules:                                                          # Defau
     - { rule: 'allow', port: '7876', proto: 'tcp', comment: "NXT Node API Port" }
 ```
 
+variable for **host_vars**
+```yaml
+public_ip: "XXX.XXX.XXX.XXX"                                             # public IP of the server where node is installed
+```
+should be used when server has different IP than the one assigned to network interface. That variable shoul dbe placed specifically in ***ho
+
+
 Dependencies
 ------------
 
