@@ -72,7 +72,7 @@ nxt.peerServerHost=0.0.0.0
 # peers, and may be different from nxt.peerServerPort (useful if you do port
 # forwarding behind a router).  Peers will use the external connection address 
 # if nxt.myAddress is not specified and nxt.shareMyAddress is set to true.
-nxt.myAddress={{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}
+nxt.myAddress={{ public_ip | default(hostvars[inventory_hostname]['ansible_default_ipv4']['address']) }}
 
 # My platform, to be announced to peers.
 nxt.myPlatform={{ ardor_my_platform }}
