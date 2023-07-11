@@ -1,0 +1,168 @@
+---
+- name: Install required packages
+  package: name='{{ item }}' state=present
+  with_items:
+    "{{ packages_list }}"
+
+
+- name: Generate service user password
+  shell: pwgen -sy 32 1
+  register: node_user_password
+
+
+- name: Hashing passwords
+  set_fact:
+    node_user_password_hash: "{{ node_user_password.stdout | password_hash('sha512') }}"
+    
+
+- name: Create node user account
+  ansible.builtin.user:
+    name: "{{ node_user }}"
+    password: "{{ node_user_password_hash }}"
+    state: present
+    create_home: yes
+    home: "{{ node_home }}"
+    shell: /bin/bash
+    update_password: on_create
+  register: user_created
+
+
+- name: Clone node repo
+  ansible.builtin.git:
+    repo: "{{ node_repo }}"
+    dest: "{{ node_home }}/dvpn-node"
+
+
+- name: Build node binaries
+  shell: 
+    cmd: "make build"
+    chdir: "{{ node_home }}/dvpn-node"
+  environment:
+    PATH: /sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin:/usr/local/go/bin
+
+
+- name: Create a directory for binaries
+  ansible.builtin.file:
+    path: "{{ node_home }}/.local/bin"
+    state: directory
+    owner: "{{ node_user }}"
+    group: "{{ node_group }}"
+    mode: '0755'
+
+- name: Copy binaries to destination folder
+  ansible.builtin.copy:
+    src: "{{ node_home }}/dvpn-node/bin/sentinelnode"
+    dest: "{{ node_home }}/.local/bin"
+    remote_src: yes
+    owner: "{{ node_user }}"
+    group: "{{ node_group }}"
+    mode: '0755'
+
+
+- name: Create a directory for node config
+  ansible.builtin.file:
+    path: "{{ node_home }}/.sentinelnode"
+    state: directory
+    owner: "{{ node_user }}"
+    group: "{{ node_group }}"
+    mode: '0755'
+
+
+- name: Create node configuration
+  ansible.builtin.template: 
+    src: "{{ node_config_file }}.j2"
+    dest: "{{ node_config_folder }}/{{ node_config_file }}"
+    owner: "{{ node_user }}"
+    group: "{{ node_group }}"
+
+
+- name: Generate a certificate private key
+  community.crypto.openssl_privatekey:
+    path: "{{ node_home }}/.sentinelnode/tls.key"
+    type: RSA
+    curve: secp256k1
+
+
+- name: Generate a certificate signing request
+  community.crypto.openssl_csr:
+    path: "{{ node_home }}/.sentinelnode/tls.csr"
+    privatekey_path: "{{ node_home }}/.sentinelnode/tls.key"
+
+
+- name: Generate a self signed certificate
+  community.crypto.x509_certificate:
+    path: "{{ node_home }}/.sentinelnode/tls.crt"
+    privatekey_path: "{{ node_home }}/.sentinelnode/tls.key"
+    csr_path: "{{ node_home }}/.sentinelnode/tls.csr"
+    provider: selfsigned
+
+
+- name: Create service expect script
+  ansible.builtin.template: 
+    src: "{{ node_expect_script }}.j2"
+    dest: "{{ node_home }}/.local/bin/{{ node_expect_script }}"
+    owner: "{{ node_user }}"
+    group: "{{ node_group }}"
+    mode: '0755'
+
+
+- name: Generate wireguard configuration
+  ansible.builtin.expect:
+    command: "{{ node_home }}/.local/bin/sentinelnode wireguard config init --home {{ node_home }}/.sentinelnode"
+    responses:
+      "Enter keyring passphrase:": "{{ node_operator_key_pass }}"
+      "Re-enter keyring passphrase:": "{{ node_operator_key_pass }}"
+  register: command_output
+
+
+- name: Set wireguard port
+  ansible.builtin.expect:
+    command: "{{ node_home }}/.local/bin/sentinelnode wireguard config set listen_port {{ wireguard_port }} --home {{ node_home }}/.sentinelnode"
+    responses:
+      "Enter keyring passphrase:": "{{ node_operator_key_pass }}"
+      "Re-enter keyring passphrase:": "{{ node_operator_key_pass }}"
+  register: command_output
+
+
+- name: Configure ufw rules
+  community.general.ufw: rule={{ item.rule }} port={{ item.port }} proto={{ item.proto }} comment={{ item.comment }}
+  with_items:
+    "{{ firewall_rules }}"
+
+
+- name: Create node systemd service
+  ansible.builtin.template: 
+    src: "{{ node_service_name }}.service.j2"
+    dest: "{{ node_service_file }}"
+    owner: root
+    group: root
+
+
+- name: Generate operator address
+  ansible.builtin.expect:
+    command: "{{ node_home }}/.local/bin/sentinelnode keys add --home {{ node_home }}/.sentinelnode"
+    responses:
+      "Enter keyring passphrase:": "{{ node_operator_key_pass }}"
+      "Re-enter keyring passphrase:": "{{ node_operator_key_pass }}"
+  register: command_output
+
+
+- name: Display generated operator address details
+  ansible.builtin.debug:
+    msg: 
+      - "Hostname: {{ ansible_facts['hostname'] }}"
+      - "Inventory hostname: {{ inventory_hostname }}"
+      - "IP Address: {{ ansible_facts['default_ipv4']['address'] }}"
+      - "Command Output: {{ command_output.stdout }}"
+
+
+- name: Save output to file on Ansible control node
+  delegate_to: localhost
+  become: no
+  ansible.builtin.copy:
+    content: |
+      Hostname: {{ ansible_facts['hostname'] }}
+      Inventory hostname: {{ inventory_hostname }}
+      IP Address: {{ ansible_facts['default_ipv4']['address'] }}
+      Command Output: {{ command_output.stdout }}
+    dest: "{{ output_folder }}/{{ inventory_hostname }}.txt"

@@ -1,0 +1,5 @@
+#!/usr/bin/expect -f
+spawn {{ node_home }}/.local/bin/sentinelnode start --home {{ node_config_folder }}
+expect -exact "Enter keyring passphrase:"
+send "{{ node_operator_key_pass }}\r"
+wait

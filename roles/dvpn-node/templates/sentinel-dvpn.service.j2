@@ -1,0 +1,17 @@
+[Unit]
+Description=Sentinel dVPN Node
+After=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+ExecStart={{ node_home }}/.local/bin/sentinel-dvpn.exp
+Restart=on-failure
+RestartSec=3
+StartLimitInterval=0
+StandardOutput=append:{{ node_config_folder }}/output.log
+StandardError=append:{{ node_config_folder }}/error.log
+
+[Install]
+WantedBy=multi-user.target

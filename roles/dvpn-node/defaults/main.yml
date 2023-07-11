@@ -1,0 +1,28 @@
+packages_list:
+  - make
+  - clang
+  - pkg-config
+  - libssl-dev
+  - build-essential
+  - automake
+  - libtool
+  - libunbound-dev
+  - git
+  - jq
+  - llvm
+  - libudev-dev
+  - wireguard
+  - wireguard-tools
+  - pwgen
+  - expect
+node_home: "/home/{{ node_user }}"
+node_config_file: "config.toml"
+node_config_folder: "{{ node_home }}/.sentinelnode"
+node_expect_script: "sentinel-dvpn.exp"
+node_service_name: "sentinel-dvpn"
+node_service_file: "/etc/systemd/system/{{ node_service_name }}.service"
+firewall_rules:
+    - { rule: 'allow', port: '{{ node_port }}', proto: 'tcp', comment: "Sentinel dVPN Node" }
+    - { rule: 'allow', port: '{{ wireguard_port }}', proto: 'udp', comment: "Sentinel dVPN WireGuard" }
+
+
