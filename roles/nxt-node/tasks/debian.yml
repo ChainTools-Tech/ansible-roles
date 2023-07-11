@@ -12,7 +12,7 @@
 - name: Configure ufw rules
   ufw: rule={{ item.rule }} port={{ item.port }} proto={{ item.proto }} comment={{ item.comment }}
   with_items:
-    "{{ firewall_fules }}"
+    "{{ firewall_rules }}"
 
 
 - name: Enable ufw logging

@@ -1,0 +1,23 @@
+---
+dependencies: []
+
+galaxy_info:
+  role_name: nxt-node
+  author: qf3l3k
+  description: NXT Node installation for Linux.
+  company: "ChainTools"
+  license: "license (BSD)"
+  min_ansible_version: 2.4
+  platforms:
+    - name: Debian
+      versions:
+        - all
+    - name: Ubuntu
+      versions:
+        - trusty
+        - xenial
+        - focal
+  galaxy_tags:
+    - nxt
+    - node
+    - blockchain
