@@ -31,6 +31,7 @@
   ansible.builtin.git:
     repo: "{{ node_repo }}"
     dest: "{{ node_home }}/dvpn-node"
+    version: "{{ node_version }}"
 
 
 - name: Build node binaries
@@ -95,15 +96,6 @@
     privatekey_path: "{{ node_home }}/.sentinelnode/tls.key"
     csr_path: "{{ node_home }}/.sentinelnode/tls.csr"
     provider: selfsigned
-
-
-- name: Create service expect script
-  ansible.builtin.template: 
-    src: "{{ node_expect_script }}.j2"
-    dest: "{{ node_home }}/.local/bin/{{ node_expect_script }}"
-    owner: "{{ node_user }}"
-    group: "{{ node_group }}"
-    mode: '0755'
 
 
 - name: Generate wireguard configuration
