@@ -1,0 +1,42 @@
+---
+- name : Create temporary build folder
+  tempfile:
+    state: directory
+    suffix: staging
+    path: "{{ temp_path }}"
+  register: build_folder
+
+
+- name: Temporary build folder
+  debug:
+    msg: "Building Cosmovisor in: {{ build_folder.path }}"
+
+
+- name: Clone Cosmos SDK repo
+  ansible.builtin.git:
+    repo: "{{ cosmos_sdk_repo }}"
+    dest: "{{ build_folder.path }}/cosmos-sdk"
+
+
+- name: Build Cosmovisor binaries
+  shell: 
+    cmd: "make cosmovisor"
+    chdir: "{{ build_folder.path }}/cosmos-sdk/tools/cosmovisor"
+  environment:
+    PATH: /sbin:/usr/sbin:/bin:/usr/bin:/usr/local/bin:/usr/local/go/bin
+
+
+- name: Copy Cosmovisor binaries
+  ansible.builtin.copy:
+    src: "{{ build_folder.path }}/cosmos-sdk/tools/cosmovisor/cosmovisor"
+    dest: "{{ cosmovisor_bin_location }}/cosmovisor"
+    remote_src: yes
+    owner: root
+    group: root
+    mode: '0755'
+
+
+- name: Remove Cosmos SDK repo
+  ansible.builtin.file:
+    path: "{{ build_folder.path }}/cosmos-sdk"
+    state: absent
