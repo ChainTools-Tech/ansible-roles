@@ -1,15 +1,24 @@
 ---
-vars:
-  Files: []
-
 - name: Fetch the latest version of Golang from URL
-  ansible.builtin.set_fact:
-    golang_latest_version: "{{ lookup('url', 'https://go.dev/VERSION?m=text') }}"
+  uri:
+    url: https://go.dev/VERSION?m=text
+    return_content: yes
+  register: url_output
+
+
+- name: Extract Golang version
+  set_fact:
+    golang_version: "{{ url_output.content.split('\n')[0] }}"
+
+
+- name: Display Go version
+  debug:
+    var: golang_version
 
 
 - name: Set Golang package download URL
   ansible.builtin.set_fact:
-    golang_url: "https://golang.org/dl/{{ golang_latest_version }}.linux-{{ golang_arch }}.tar.gz"
+    golang_url: "https://golang.org/dl/{{ golang_version }}.linux-{{ golang_arch }}.tar.gz"
 
 
 - name: Set Golang package name
@@ -50,17 +59,6 @@ vars:
     patterns: "{{ profile_files }}"
     hidden: true
   register: found_profile_files
-
-
-- name: Create list of located files
-  set_fact:
-    Files: "{{ Files + [item.path]}}"
-  with_items: "{{ found_profile_files.files }}"
-
-
-- name: Display list of located files
-  debug:
-    msg: "{{ Files }}"
 
 
 - name: Add Golang variables to profile files
