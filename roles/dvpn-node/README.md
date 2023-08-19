@@ -6,6 +6,8 @@ It handles tasks such as:
 - initiating its configuration, 
 - generating the Node wallet, 
 - setting up the service for the dVPN node.
+In default configuration role deploys node configuration which creates node wallet keys in test keyring (means no password is required to start node).
+This can be adjusted in configuration template.
 
 ## Prerequisites
 
@@ -21,7 +23,7 @@ The `dvpn-node` role uses the following variables:
 | `node_group`           | `"sentinel"`                          | Group for the dVPN Node.                              |
 | `node_repo`            | `"https://github.com/sentinel-official/dvpn-node"` | Repository URL for the dVPN Node.                     |
 | `node_version`         | `"v0.7.0"`                            | Version of the dVPN Node to deploy.                   |
-| `node_operator_key_pass` | `"password"`                        | Password for the Node operator wallet.                   |
+| `node_operator_key_pass` | `"password"`                        | Password for the Node operator wallet. (Used only when keyring backend is changed to file.)                   |
 | `node_port`            | `"29843"`                             | Port for the dVPN Node.                               |
 | `wireguard_port`       | `"12121"`                             | Port for the WireGuard.                               |
 | `output_folder`        | `"/home/ubuntu/output/dvpn-node"`     | Folder to store the output related to the dVPN Node wallet details.  |
