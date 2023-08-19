@@ -1,0 +1,3 @@
+cosmos_sdk_repo: "https://github.com/cosmos/cosmos-sdk"
+cosmovisor_bin_location: "/usr/local/bin"
+temp_path: "/tmp"
